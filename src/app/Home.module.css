@@ -1,0 +1,186 @@
+/* Главный контейнер */
+.homePage {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Stories */
+.stories {
+  display: flex;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding: 1rem 16px;
+  gap: 16px;
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.stories::-webkit-scrollbar {
+  height: 8px;
+}
+
+.stories::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.stories::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+.story {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 105px;
+  margin-left: 0;
+}
+
+.avatar-wrapper {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--accent);
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.name {
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  color: var(--foreground);
+  text-align: center;
+}
+
+/* Feed / посты */
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+}
+
+.postCard {
+  width: 600px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.postHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.postAvatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.postImage {
+  width: 600px;
+  height: 350px;
+  object-fit: cover;
+}
+
+.postCaption {
+  padding: 0.75rem 1rem 1rem;
+  color: var(--foreground);
+  font-size: 0.95rem;
+}
+
+/* Адаптивность */
+
+/* Планшеты */
+@media (max-width: 768px) {
+  .homePage {
+    max-width: 700px;
+    padding: 0 1.5rem;
+  }
+
+  .story {
+    width: 70px;
+  }
+
+  .avatar-wrapper {
+    width: 70px;
+    height: 70px;
+    border-width: 2px;
+  }
+
+  .name {
+    font-size: 0.75rem;
+  }
+
+  .postCard {
+    width: 90%;
+  }
+
+  .postImage {
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* Мобильные */
+@media (max-width: 480px) {
+  .homePage {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+
+  .story {
+    width: 60px;
+  }
+
+  .avatar-wrapper {
+    width: 60px;
+    height: 60px;
+    border-width: 2px;
+  }
+
+  .name {
+    font-size: 0.7rem;
+  }
+
+  .postCard {
+    width: 100%;
+  }
+
+  .postHeader {
+    padding: 0.25rem 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .postAvatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .postCaption {
+    padding: 0.25rem 0.5rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .postImage {
+    width: 100%;
+    height: auto;
+    max-height: 350px;
+  }
+}

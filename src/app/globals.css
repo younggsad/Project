@@ -1,42 +1,123 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Светлая тема */
+html.light {
+  --background: radial-gradient(
+    circle at top left,
+    #dfe3fb 0%,
+    #e9ecfc 40%,
+    #f9f9ff 100%
+  );
+  --foreground: #111827;
+  --accent: #6366f1;
+  --card-bg: #ffffff;
+  --muted-text: #475569;
+
+  /* Скролл */
+  --scrollbar-track: #f3f4f6;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #a5b4fc;
+  --scrollbar-thumb-active: #818cf8;
+
+  /* Кнопка */
+  --fab-bg: #ffffff;
+  --fab-ico: #6366f1;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+
+/* Тёмная тема */
+html.dark {
+  --background: radial-gradient(circle at top left, #0b0f1a 0%, #111827 80%);
+  --foreground: #e5e7eb;
+  --accent: #818cf8;
+  --card-bg: #1f2937;
+  --muted-text: #9ca3af;
+
+  --scrollbar-track: #1f2937;
+  --scrollbar-thumb: #4b5563;
+  --scrollbar-thumb-hover: #6366f1;
+  --scrollbar-thumb-active: #818cf8;
 }
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  transition: background 0.4s ease, color 0.3s ease;
+  scroll-behavior: smooth;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+/* Контейнер приложения */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* Основной контент рядом с Sidebar */
+main {
+  flex: 1;
+  margin-left: 270px;
+  padding: 2rem;
+  transition: margin-left 0.3s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+/* Мобильные устройства */
+@media (max-width: 768px) {
+  main {
+    margin-left: 0;
+    margin-bottom: 60px;
+    padding: 1rem;
+  }
+}
+
+a, button {
+  transition: color 0.3s ease, background 0.3s ease;
+}
+
+/* SCROLLBAR СТИЛИ */
+
+/* Chrome, Safari, Edge */
+html::-webkit-scrollbar {
+  width: 10px;
+}
+
+html::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+html::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.25s ease;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+html::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-active);
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Мобильные устройства */
+@media (max-width: 768px) {
+  html::-webkit-scrollbar {
+    width: 6px;
   }
 }
