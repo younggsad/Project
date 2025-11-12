@@ -1,0 +1,105 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 270px;
+  height: 100vh;
+  background: var(--card-bg);
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+  z-index: 10;
+  transition: background 0.3s ease, border 0.3s ease;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.headerText {
+  font-size: 25px;
+  font-weight: 700;
+  margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  transition: transform 0.3s ease;
+  cursor: default;
+}
+
+.headerText:hover {
+  transform: scale(1.05);
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  text-decoration: none;
+  border-radius: 10px;
+  color: var(--foreground);
+  background: transparent;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
+}
+
+.navItem:hover {
+  background: rgba(99, 102, 241, 0.1);
+  transform: translateX(4px);
+}
+
+.active {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--accent);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* === Мобильная версия === */
+@media (max-width: 768px) {
+  .sidebar {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-right: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+  }
+
+  .nav {
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+  }
+
+  .navItem {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    font-size: 12px;
+    padding: 6px;
+  }
+
+  .label {
+    display: none;
+  }
+}

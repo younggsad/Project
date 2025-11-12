@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ThemeProvider from "@/components/Theme/themeProvider";
 import ThemeToggle from "@/components/Theme/ThemeToggle";
+import { Sidebar } from "@/components/Sidebar/Sidebar";
 
 export const metadata: Metadata = {
   title: {
-    default: "Instagram Clone",
-    template: "%s | Instagram Clone",
+    default: "Project",
+    template: "%s | Project",
   },
   icons: {
     icon: "/images/favicon.svg",
@@ -23,6 +24,10 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <div className="app-layout">
+            {/* Sidebar всегда доступен */}
+            <Sidebar />
+
+            {/* Основной контент */}
             <main className="main-content">
               <ThemeToggle />
               {children}
