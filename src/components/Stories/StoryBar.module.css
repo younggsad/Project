@@ -1,0 +1,104 @@
+.storyBar {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background-color: var(--card-bg);
+
+  width: var(--content-width);
+  max-width: 100%;
+  margin: 0 auto;
+
+  scroll-behavior: smooth;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* элементы сторис */
+.story {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 100px;
+  transition: transform 0.18s ease;
+}
+
+.story img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  padding: 3px;
+  border: 3px solid transparent;
+  background: var(--story-border);
+  object-fit: cover;
+  margin-bottom: 6px;
+  transition: transform 0.18s ease;
+}
+
+.story:hover { transform: translateY(-3px); }
+.story img:hover { transform: scale(1.06); }
+
+.story span {
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+@media (max-width: 1024px) and (min-width: 600px) {
+  .storyBar {
+    width: 700px;
+    padding: 14px 10px;
+    justify-content: center;
+    overflow-x: hidden;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .story img {
+    width: 70px;
+    height: 70px;
+  }
+
+  .story span {
+    font-size: 12px;
+  }
+
+  /* Показываем только первые 8 */
+  .story:nth-child(n + 9) {
+    display: none;
+  }
+}
+
+/* Мобильная версия */
+@media (max-width: 768px) {
+  .storyBar {
+    width: 100%;
+    padding: 12px 10px;
+    justify-content: center;
+    overflow-x: hidden;
+    flex-wrap: wrap;
+  }
+
+  .story img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .story span {
+    font-size: 11px;
+  }
+
+  /* Показываем только первые 6 историй */
+  .story:nth-child(n + 7) {
+    display: none;
+  }
+}

@@ -1,3 +1,7 @@
+:root {
+  --content-width: 800px;
+}
+
 /* Светлая тема */
 html.light {
   --background: radial-gradient(
