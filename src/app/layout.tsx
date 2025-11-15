@@ -24,10 +24,8 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <div className="app-layout">
-            {/* Sidebar всегда доступен */}
             <Sidebar />
 
-            {/* Основной контент */}
             <main className="main-content">
               <ThemeToggle />
               {children}

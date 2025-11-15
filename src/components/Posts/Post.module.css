@@ -1,6 +1,6 @@
 .post {
   border: 1px solid rgba(0,0,0,0.08);
-  border-radius: 10px;
+  border-radius: 30px;
   margin-bottom: 20px;
   background-color: var(--card-bg);
   overflow: hidden;
@@ -10,7 +10,6 @@
 
 .post:hover { transform: translateY(-2px); }
 
-/* фиксированная ширина карточки поста (ссылка на переменную) */
 .postCard, .post { 
   width: var(--content-width);
   max-width: 100%;
@@ -43,7 +42,6 @@
   margin-left: auto;
 }
 
-/* изображение с фиксированным соотношением */
 .postImage {
   width: 100%;
   aspect-ratio: 16/9;
@@ -51,12 +49,15 @@
   max-height: 600px;
 }
 
-/* текст подписи */
 .caption {
-  padding: 8px 10px;
+  padding: 6px 10px;
   font-size: 14px;
   line-height: 1.4;
   color: var(--foreground);
+}
+
+.caption strong {
+  margin-right: 4px;
 }
 
 /* Мобильная версия */
