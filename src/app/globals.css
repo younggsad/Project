@@ -80,8 +80,6 @@ main {
     margin-left: 0;
     margin-bottom: 60px;
     padding: 1rem;
-    overflow-x: hidden;
-    overflow-y: hidden;
   }
 }
 
@@ -126,7 +124,5 @@ html {
 @media (max-width: 768px) {
   html::-webkit-scrollbar {
     width: 6px;
-    overflow-x: hidden;
-    overflow-y: hidden;
   }
 }
