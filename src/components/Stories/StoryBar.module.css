@@ -51,11 +51,12 @@
   border: 3px solid transparent;
   background: var(--story-border);
   object-fit: cover;
-  margin-bottom: 6px;
-  transition: transform 0.18s ease;
+  margin-bottom: 0px;
+  display: block;
+  transition: transform 0.2s ease;
 }
 
-.story:hover { transform: translateY(-3px); }
+.story:hover { transform: translateY(-3px) }
 .story img:hover { transform: scale(1.06); }
 
 .story span {
@@ -68,13 +69,34 @@
   font-weight: 500;
 }
 
+.avatarWrapper {
+  padding: 2px;
+  border-radius: 60%;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.unviewed {
+  background: rgba(79, 91, 213, 0.6);
+  padding: 2px;
+  box-shadow: 0 0 6px rgba(79, 91, 213, 0.8);
+}
+
+@media (max-width: 1024px) {
+  .story img { width: 70px; height: 70px; }
+}
+
+@media (max-width: 768px) {
+  .story img { width: 60px; height: 60px; }
+}
+
 @media (max-width: 1024px) and (min-width: 600px) {
   .storyBar {
     width: 100%;
     padding: 14px 10px;
-    overflow-x: auto;      /* ← включаем скролл */
-    flex-wrap: nowrap;     /* ← запрещаем перенос */
-    justify-content: flex-start; /* ← выравниваем в начало */
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
     gap: 14px;
   }
 
@@ -93,8 +115,8 @@
   .storyBar {
     width: 100%;
     padding: 12px 10px;
-    overflow-x: auto;      /* ← включаем скролл */
-    flex-wrap: nowrap;     /* ← запрещаем перенос */
+    overflow-x: auto;
+    flex-wrap: nowrap;
     justify-content: flex-start;
   }
 
