@@ -1,14 +1,13 @@
 .homePage {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
-  max-width: calc(var(--content-width) + 64px); /* чуть больше, чтобы были боковые паддинги */
+  gap: 1.5rem;
+  max-width: calc(var(--content-width) + 64px);
   margin: 0 auto;
   padding: 0 2rem;
   box-sizing: border-box;
 }
 
-/* обёртка сторис — теперь под контентную ширину */
 .stories-wrapper {
   width: var(--content-width);
   max-width: 100%;
@@ -17,7 +16,6 @@
   box-sizing: border-box;
 }
 
-/* feed / посты */
 .feed {
   display: flex;
   flex-direction: column;
@@ -75,7 +73,6 @@
   }
 }
 
-/* Фикс: прижимаем нижнюю панель к низу */
 .homePage {
   min-height: 100vh;
   display: flex;

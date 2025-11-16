@@ -5,10 +5,12 @@
   background-color: var(--card-bg);
   overflow: hidden;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  transition: transform 0.2s ease;
+  transition: transform 0.25s ease;
 }
 
-.post:hover { transform: translateY(-2px); }
+.post:hover { 
+  transform: translateY(-2px) scale(1.03); 
+}
 
 .postCard, .post { 
   width: var(--content-width);

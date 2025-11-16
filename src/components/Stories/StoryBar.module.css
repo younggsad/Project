@@ -24,6 +24,14 @@
   display: none;
 }
 
+.storyBar {
+  transition: transform 0.25s ease;
+}
+
+.storyBar:hover { 
+  transform: scale(1.03);
+}
+
 .story {
   display: flex;
   flex-direction: column;
