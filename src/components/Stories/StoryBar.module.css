@@ -76,7 +76,7 @@
   transition: all 0.3s ease;
 }
 
-.unviewed {
+.unviewed .avatarWrapper {
   background: rgba(79, 91, 213, 0.6);
   padding: 2px;
   box-shadow: 0 0 6px rgba(79, 91, 213, 0.8);

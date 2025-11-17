@@ -25,35 +25,14 @@ export interface UserStories {
 }
 
 export const stories: Story[] = [
-  {
-    id: 1,
-    userId: 1,
-    createdAt: Date.now(),
-    media: [{ type: "image", url: "/posts/post1.jpg", duration: 5000 }],
-  },
-  {
-    id: 2,
-    userId: 2,
-    createdAt: Date.now(),
-    media: [{ type: "image", url: "/stories/story3.jpg", duration: 5000 }],
-  },
-  {
-    id: 3,
-    userId: 3,
-    createdAt: Date.now(),
-    media: [{ type: "image", url: "/stories/story4.jpg", duration: 5000 }],
-  },
-  {
-    id: 4,
-    userId: 4,
-    createdAt: Date.now(),
-    media: [{ type: "image", url: "/stories/story5.jpg", duration: 5000 }],
-  },
+  { id: 1, userId: 1, createdAt: Date.now(), media: [{ type: "image", url: "/stories/story1.jpg", duration: 5000 }] },
+  { id: 2, userId: 2, createdAt: Date.now(), media: [{ type: "image", url: "/stories/story2.jpg", duration: 5000 }, { type: "image", url: "/stories/story2.jpg", duration: 5000 }] },
+  { id: 3, userId: 3, createdAt: Date.now(), media: [{ type: "image", url: "/stories/story3.jpg", duration: 5000 }, { type: "video", url: "/stories/video1.mp4" }] },
+  { id: 4, userId: 4, createdAt: Date.now(), media: [{ type: "image", url: "/stories/story4.jpg", duration: 5000 }] },
 ];
 
-export const storyData: UserStories[] = stories.map((story) => {
-  const user = users.find((u) => u.id === story.userId);
-
+export const storyData: UserStories[] = stories.map(story => {
+  const user = users.find(u => u.id === story.userId);
   return {
     id: story.id,
     userId: story.userId,
