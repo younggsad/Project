@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./Stories.module.css";
+import { Volume2, VolumeX } from "lucide-react";
 
 export type StoryItem = {
   userId: number;
@@ -25,6 +26,7 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
   const [index, setIndex] = useState(startIndex);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
 
   const timerRef = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -63,7 +65,7 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
           return i;
         }
       }
-      if (items[next].userId !== items[i].userId) {
+      if (items[next]?.userId && items[next].userId !== current.userId) {
         onUserChange?.(items[next].userId);
       }
       return next;
@@ -76,7 +78,7 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
     setIndex((i) => {
       if (i === 0) return 0;
       const prev = i - 1;
-      if (items[prev].userId !== items[i].userId) {
+      if (items[prev]?.userId && items[prev].userId !== current.userId) {
         onUserChange?.(items[prev].userId);
       }
       return prev;
@@ -174,14 +176,32 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
           {current.media.type === "image" ? (
             <img src={current.media.url} className={styles.mediaImage} draggable={false} />
           ) : (
-            <video ref={videoRef} src={current.media.url} className={styles.mediaVideo} playsInline autoPlay muted />
+            <video ref={videoRef} src={current.media.url} className={styles.mediaVideo} playsInline autoPlay muted={isMuted} preload="auto" />
           )}
 
-          <div className={styles.hitZones}>
-            <button className={`${styles.zone} ${styles.left}`} onClick={() => handleZoneClick("prev")} />
-            <button className={`${styles.zone} ${styles.center}`} onClick={() => handleZoneClick("toggle")} />
-            <button className={`${styles.zone} ${styles.right}`} onClick={() => handleZoneClick("next")} />
-          </div>
+        <div className={styles.hitZones}>
+
+          {current.media.type === "video" && (
+            <button
+              className={styles.soundBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMuted((prev) => {
+                  const newMuted = !prev;
+                  if (videoRef.current) videoRef.current.muted = newMuted;
+                  return newMuted;
+                });
+              }}
+            >
+              {isMuted ? <VolumeX size={22} /> : <Volume2 size={22} />}
+            </button>
+          )}
+
+          <button className={`${styles.zone} ${styles.left}`} onClick={() => handleZoneClick("prev")} />
+          <button className={`${styles.zone} ${styles.center}`} onClick={() => handleZoneClick("toggle")} />
+          <button className={`${styles.zone} ${styles.right}`} onClick={() => handleZoneClick("next")} />
+        </div>
+
         </div>
       </div>
     </div>

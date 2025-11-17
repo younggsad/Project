@@ -23,16 +23,29 @@ export default function StoryBar() {
     [stories]
   );
 
-  // открыть истории выбранного пользователя
-  const handleOpenUser = useCallback((userId: number) => {
-    const idx = flatStories.findIndex((it) => it.userId === userId);
-    if (idx === -1) return;
-    setOpenIndex(idx);
+  // 🔥 СОРТИРОВКА: непросмотренные → просмотренные
+  const sortedStories = useMemo(
+    () => [
+      ...stories.filter((s) => !s.viewed),
+      ...stories.filter((s) => s.viewed),
+    ],
+    [stories]
+  );
 
-    setStories((prev) =>
-      prev.map((s) => (s.userId === userId ? { ...s, viewed: true } : s))
-    );
-  }, [flatStories]);
+  // открыть истории выбранного пользователя
+  const handleOpenUser = useCallback(
+    (userId: number) => {
+      const idx = flatStories.findIndex((it) => it.userId === userId);
+      if (idx === -1) return;
+      setOpenIndex(idx);
+
+      // помечаем как просмотренные
+      setStories((prev) =>
+        prev.map((s) => (s.userId === userId ? { ...s, viewed: true } : s))
+      );
+    },
+    [flatStories]
+  );
 
   // вызывается при смене пользователя в Stories
   const handleUserChange = useCallback((userId: number) => {
@@ -44,14 +57,18 @@ export default function StoryBar() {
   return (
     <>
       <div className={styles.storyBar}>
-        {stories.map((s) => (
+        {sortedStories.map((s) => (
           <div
             key={s.id}
             className={`${styles.story} ${!s.viewed ? styles.unviewed : ""}`}
             onClick={() => handleOpenUser(s.userId)}
           >
             <div className={styles.avatarWrapper}>
-              <img src={s.user.avatar} alt={s.user.username} className={styles.avatar} />
+              <img
+                src={s.user.avatar}
+                alt={s.user.username}
+                className={styles.avatar}
+              />
             </div>
             <span>{s.user.username}</span>
           </div>
