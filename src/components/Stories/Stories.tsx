@@ -1,198 +1,280 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./Stories.module.css";
-import { UserStories } from "@/data/stories";
+
+export type StoryItem = {
+  userId: number;
+  username: string;
+  avatar: string;
+  media: { type: "image" | "video"; url: string; duration?: number };
+};
 
 type Props = {
-  stories: UserStories[];
-  startUserIndex?: number;
-  onClose?: () => void;
+  items: StoryItem[];
+  startIndex: number;
+  onClose: () => void;
+  onUserChange?: (userId: number) => void;
   loop?: boolean;
 };
 
 const DEFAULT_IMAGE_DURATION = 5000;
-const PROGRESS_UPDATE_MS = 50;
+const PROGRESS_TICK_MS = 50;
 
-const Stories = ({ stories, startUserIndex = 0, onClose, loop = false }: Props) => {
-  const [userIndex, setUserIndex] = useState(startUserIndex);
-  const [mediaIndex, setMediaIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Props) => {
+  const [index, setIndex] = useState<number>(startIndex);
+  const current = items[index];
+  const duration = current?.media?.duration ?? (current?.media?.type === "image" ? DEFAULT_IMAGE_DURATION : DEFAULT_IMAGE_DURATION);
+
+    // Guard: если items пустой или index вне диапазона
+  if (!items || items.length === 0 || index < 0 || index >= items.length) {
+    return null;
+  }
+
+  if (!current) return null;
+
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [progress, setProgress] = useState<number>(0);
 
   const timerRef = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const currentUser = stories[userIndex];
-  const currentMedia = currentUser?.media[mediaIndex];
-  const duration = currentMedia?.duration ?? DEFAULT_IMAGE_DURATION;
+  // Ensure index follows startIndex if it changes externally
+  useEffect(() => setIndex(startIndex), [startIndex]);
 
-  // Preload next media
+  // Preload next item
   useEffect(() => {
-    const nextMedia = currentUser?.media[mediaIndex + 1];
-    if (!nextMedia) return;
-    if (nextMedia.type === "image") {
+    const next = items[index + 1];
+    if (!next) return;
+    if (next.media.type === "image") {
       const img = new Image();
-      img.src = nextMedia.url;
+      img.src = next.media.url;
     } else {
       const v = document.createElement("video");
-      v.src = nextMedia.url;
+      v.src = next.media.url;
       v.preload = "auto";
     }
-  }, [mediaIndex, currentUser]);
+  }, [index, items]);
 
-  // Clear and start timer for progress
-  useEffect(() => {
-    if (!currentMedia) return;
-    setProgress(0);
-
-    if (timerRef.current) {
+  // Clear timer helper
+  const clearTimer = useCallback(() => {
+    if (timerRef.current !== null) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+  }, []);
 
-    if (currentMedia.type === "video" && videoRef.current) {
+  // Move to next index (functional update to avoid stale closures)
+  const goNext = useCallback(() => {
+    setIndex((i) => {
+      const next = i + 1;
+      if (next >= items.length) {
+        // reached end
+        if (loop) {
+          // wrap
+          onUserChange?.(items[0].userId);
+          return 0;
+        } else {
+          onClose();
+          return i;
+        }
+      }
+      // if user changes, notify parent
+      if (items[next].userId !== items[i].userId) {
+        onUserChange?.(items[next].userId);
+      }
+      return next;
+    });
+    setProgress(0);
+    clearTimer();
+  }, [items, loop, onClose, onUserChange, clearTimer]);
+
+  // Move previous
+  const goPrev = useCallback(() => {
+    setIndex((i) => {
+      if (i === 0) return 0;
+      const prev = i - 1;
+      if (items[prev].userId !== items[i].userId) {
+        onUserChange?.(items[prev].userId);
+      }
+      return prev;
+    });
+    setProgress(0);
+    clearTimer();
+  }, [items, onUserChange, clearTimer]);
+
+  // Progress handling: if video -> listen to timeupdate; if image -> use interval
+  useEffect(() => {
+    if (!current) return;
+    setProgress(0);
+    clearTimer();
+
+    if (current.media.type === "video") {
+      // ensure videoRef points to the right element by id
+      // We'll use a dynamic src videoRef (the element is rendered below with ref)
       const video = videoRef.current;
-      const onTime = () => setProgress(Math.min(1, video.currentTime / video.duration));
-      const onEnded = () => handleNext();
+      if (video) {
+        const onTime = () => {
+          if (video.duration && !isNaN(video.duration)) {
+            setProgress(Math.min(1, video.currentTime / video.duration));
+          }
+        };
+        const onEnded = () => goNext();
 
-      video.addEventListener("timeupdate", onTime);
-      video.addEventListener("ended", onEnded);
+        video.addEventListener("timeupdate", onTime);
+        video.addEventListener("ended", onEnded);
 
-      if (!isPaused) video.play().catch(() => {});
-      else video.pause();
+        if (!isPaused) video.play().catch(() => {});
+        else video.pause();
 
-      return () => {
-        video.removeEventListener("timeupdate", onTime);
-        video.removeEventListener("ended", onEnded);
-      };
+        return () => {
+          video.removeEventListener("timeupdate", onTime);
+          video.removeEventListener("ended", onEnded);
+        };
+      } else {
+        // fallback: auto advance after duration if video element not mounted
+        const t = window.setTimeout(() => goNext(), duration);
+        return () => clearTimeout(t);
+      }
     } else {
+      // image
       let elapsed = 0;
       if (!isPaused) {
         timerRef.current = window.setInterval(() => {
-          elapsed += PROGRESS_UPDATE_MS;
+          elapsed += PROGRESS_TICK_MS;
           setProgress(Math.min(1, elapsed / duration));
-          if (elapsed >= duration) handleNext();
-        }, PROGRESS_UPDATE_MS);
+          if (elapsed >= duration) {
+            clearTimer();
+            goNext();
+          }
+        }, PROGRESS_TICK_MS);
       }
-
       return () => {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
+        clearTimer();
       };
     }
-  }, [currentMedia, isPaused]);
+  }, [current, isPaused, goNext, duration, clearTimer]);
 
-  // Functions to navigate
-const handleNext = useCallback(() => {
-  if (!currentUser) return;
-
-  if (mediaIndex + 1 < currentUser.media.length) {
-    setMediaIndex(mediaIndex + 1);
-  } else if (userIndex + 1 < stories.length) {
-    setUserIndex(userIndex + 1);
-    setMediaIndex(0);
-  } else if (loop) {
-    setUserIndex(0);
-    setMediaIndex(0);
-  } else {
-    onClose?.();
-  }
-}, [mediaIndex, userIndex, currentUser, stories.length, loop, onClose]);
-
-const handlePrev = useCallback(() => {
-  if (mediaIndex > 0) {
-    setMediaIndex(mediaIndex - 1);
-  } else if (userIndex > 0) {
-    const prevUser = stories[userIndex - 1];
-    setUserIndex(userIndex - 1);
-    setMediaIndex(prevUser.media.length - 1);
-  }
-}, [mediaIndex, userIndex, stories]);
-
-  // Keyboard
+  // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") handlePrev();
-      if (e.key === "ArrowRight") handleNext();
-      if (e.key === "Escape") onClose?.();
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [handlePrev, handleNext, onClose]);
+  }, [goPrev, goNext, onClose]);
 
-  // Pointer
+  // Pointer zones handlers (pause on down, unpause and decide on up)
   useEffect(() => {
-    const el = containerRef.current;
+    const el = document.getElementById("stories-root");
     if (!el) return;
 
     let startX = 0;
     let startTime = 0;
 
-    const onDown = (e: PointerEvent) => {
-      startX = e.clientX;
+    const onPointerDown = (ev: PointerEvent) => {
+      startX = ev.clientX;
       startTime = Date.now();
       setIsPaused(true);
+      clearTimer();
+      // pause video if exists
+      if (videoRef.current) videoRef.current.pause();
     };
 
-    const onUp = (e: PointerEvent) => {
-      setIsPaused(false);
+    const onPointerUp = (ev: PointerEvent) => {
       const dt = Date.now() - startTime;
-      const dx = e.clientX - startX;
-      const rect = el.getBoundingClientRect();
+      const dx = ev.clientX - startX;
+      setIsPaused(false);
+      if (videoRef.current && !isNaN(videoRef.current.duration)) {
+        // resume video play if it's a video
+        if (current.media.type === "video") videoRef.current.play().catch(() => {});
+      }
       if (dt < 300 && Math.abs(dx) < 30) {
-        if (e.clientX - rect.left < rect.width / 3) handlePrev();
-        else if (e.clientX - rect.left > (rect.width * 2) / 3) handleNext();
+        const rect = el.getBoundingClientRect();
+        if (ev.clientX - rect.left < rect.width / 3) goPrev();
+        else if (ev.clientX - rect.left > (rect.width * 2) / 3) goNext();
         else setIsPaused((p) => !p);
+      } else {
+        // resume timer if image
+        if (current.media.type === "image" && !isPaused) {
+          // restarting handled by effect because isPaused changed
+        }
       }
     };
 
-    el.addEventListener("pointerdown", onDown);
-    window.addEventListener("pointerup", onUp);
+    el.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointerup", onPointerUp);
 
     return () => {
-      el.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("pointerup", onUp);
+      el.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onPointerUp);
     };
-  }, [handlePrev, handleNext]);
+  }, [goPrev, goNext, clearTimer, current, isPaused]);
 
-  if (!currentUser || !currentMedia) return null;
+  // render
+  if (!current) return null;
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true">
-      <div className={styles.container} ref={containerRef}>
+    <div className={styles.overlay}>
+      <div id="stories-root" className={styles.container}>
         <header className={styles.header}>
           <div className={styles.user}>
-            <img src={currentUser.user.avatar} className={styles.avatar} />
-            <div className={styles.username}>{currentUser.user.username}</div>
+            <img src={current.avatar} className={styles.avatar} />
+            <div className={styles.username}>{current.username}</div>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </header>
 
         <div className={styles.progressRow}>
-          {currentUser.media.map((_, i) => (
-            <div key={i} className={styles.progressTrack}>
-              <div
-                className={styles.progressFill}
-                style={{ transform: `scaleX(${i === mediaIndex ? progress : i < mediaIndex ? 1 : 0})` }}
-              />
-            </div>
-          ))}
+          {/* show progress for current user's media chunk:
+            find all indices for current.userId and render segments
+          */}
+          { /* compute segments for current user */}
+          {(() => {
+            const userId = current.userId;
+            const indices = items
+              .map((it, ii) => ({ it, ii }))
+              .filter((x) => x.it.userId === userId)
+              .map((x) => x.ii);
+
+            return indices.map((ii, pos) => (
+              <div key={ii} className={styles.progressTrack}>
+                <div
+                  className={styles.progressFill}
+                  style={{
+                    transform:
+                      ii === index ? `scaleX(${progress})` : ii < index ? "scaleX(1)" : "scaleX(0)",
+                  }}
+                />
+              </div>
+            ));
+          })()}
         </div>
 
         <div className={styles.mediaArea}>
-          {currentMedia.type === "image" ? (
-            <img src={currentMedia.url} className={styles.mediaImage} draggable={false} />
+          {current.media.type === "image" ? (
+            // image
+            <img src={current.media.url} className={styles.mediaImage} draggable={false} />
           ) : (
-            <video ref={videoRef} src={currentMedia.url} className={styles.mediaVideo} playsInline preload="auto" />
+            // video
+            <video
+              ref={videoRef}
+              src={current.media.url}
+              className={styles.mediaVideo}
+              playsInline
+              preload="auto"
+              autoPlay
+              muted
+            />
           )}
+
+          {/* zones */}
           <div className={styles.hitZones}>
-            <button className={`${styles.zone} ${styles.left}`} onClick={handlePrev} />
-            <button className={`${styles.zone} ${styles.center}`} onClick={() => setIsPaused((p) => !p)} />
-            <button className={`${styles.zone} ${styles.right}`} onClick={handleNext} />
+            <button aria-label="prev" className={`${styles.zone} ${styles.left}`} onClick={goPrev} />
+            <button aria-label="toggle" className={`${styles.zone} ${styles.center}`} onClick={() => setIsPaused((p) => !p)} />
+            <button aria-label="next" className={`${styles.zone} ${styles.right}`} onClick={goNext} />
           </div>
         </div>
       </div>

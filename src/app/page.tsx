@@ -1,5 +1,5 @@
 import styles from "@/app/Home.module.css";
-import { StoryBar } from "@/components/Stories/StoryBar";
+import  StoryBar  from "@/components/Stories/StoryBar";
 import { PostList } from "@/components/Posts/PostList";
 
 export default function HomePage() {

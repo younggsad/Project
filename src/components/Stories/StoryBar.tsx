@@ -1,51 +1,75 @@
 'use client';
 
-import { useState } from "react";
-import { storyData as initialStories, UserStories } from "@/data/stories";
-import Stories from "@/components/Stories/Stories";
+import React, { useCallback, useMemo, useState } from "react";
+import { storyData as initialStoryData, UserStories } from "@/data/stories";
+import Stories, { StoryItem } from "@/components/Stories/Stories";
 import styles from "./StoryBar.module.css";
 
-export const StoryBar = () => {
-  const [stories, setStories] = useState<UserStories[]>(initialStories);
-  const [openUserIndex, setOpenUserIndex] = useState<number | null>(null);
+export default function StoryBar() {
+  // локальный стейт копии storyData чтобы отмечать viewed
+  const [stories, setStories] = useState<UserStories[]>(initialStoryData);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const handleOpenStory = (idx: number) => {
-    setOpenUserIndex(idx);
+  // flat array: каждый элемент — { userId, username, avatar, media }
+  const flatStories: StoryItem[] = useMemo(
+    () =>
+      stories.flatMap((s, userIdx) =>
+        s.media.map((m) => ({
+          userId: userIdx, // индекс пользователя в массиве stories
+          username: s.user.username,
+          avatar: s.user.avatar,
+          media: m,
+        }))
+      ),
+    [stories]
+  );
 
+  // Открыть модалку на первой медиа выбранного пользователя
+  const handleOpenUser = useCallback(
+    (userIdx: number) => {
+      const idx = flatStories.findIndex((it) => it.userId === userIdx);
+      if (idx === -1) return;
+      setOpenIndex(idx);
+
+      // помечаем user как просмотренный
+      setStories((prev) =>
+        prev.map((s, i) => (i === userIdx ? { ...s, viewed: true } : s))
+      );
+    },
+    [flatStories]
+  );
+
+  // Вызывается из Stories при переключении на медиа другого пользователя
+  const handleUserChange = useCallback((userId: number) => {
     setStories((prev) =>
-      prev.map((s, i) =>
-        i === idx
-          ? { ...s, viewed: true }
-          : s
-      )
+      prev.map((s, i) => (i === userId ? { ...s, viewed: true } : s))
     );
-  };
+  }, []);
 
   return (
     <>
       <div className={styles.storyBar}>
-        {stories.map((story, idx) => (
-          <div
-            key={idx}
-            className={styles.story}
-            onClick={() => handleOpenStory(idx)}
-          >
-            <div className={`${styles.avatarWrapper} ${story.viewed ? "" : styles.unviewed}`}>
-              <img src={story.user.avatar} alt={story.user.username} className={styles.avatar} />
+        {stories.map((s, idx) => (
+          <div key={idx} className={styles.story} onClick={() => handleOpenUser(idx)}>
+            <div
+              className={`${styles.avatarWrapper} ${!s.viewed ? styles.unviewed : ""}`}
+            >
+              <img src={s.user.avatar} alt={s.user.username} className={styles.avatar} />
             </div>
-            <span>{story.user.username}</span>
+            <span>{s.user.username}</span>
           </div>
         ))}
       </div>
 
-      {openUserIndex !== null && (
+      {openIndex !== null && (
         <Stories
-          stories={stories}
-          startUserIndex={openUserIndex}
-          onClose={() => setOpenUserIndex(null)}
+          items={flatStories}
+          startIndex={openIndex}
+          onClose={() => setOpenIndex(null)}
+          onUserChange={handleUserChange}
           loop={false}
         />
       )}
     </>
   );
-};
+}
