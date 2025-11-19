@@ -38,18 +38,23 @@
   position: relative;
 }
 
+.user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 55px;
+  height: 55px;
   border-radius: 50%;
-  border: 2px solid #fff;
   object-fit: cover;
 }
 
 .username {
   color: #fff;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .closeBtn {
@@ -67,7 +72,7 @@
 .progressRow {
   display: flex;
   gap: 4px;
-  padding: 8px 12px;
+  padding: 2px 12px 20px 15px;
 }
 
 .progressTrack {
@@ -97,7 +102,8 @@
   background: #000;
 }
 
-.mediaImage, .mediaVideo {
+.mediaImage,
+.mediaVideo {
   width: 100%;
   max-width: 400px;
   height: 640px;
@@ -118,100 +124,138 @@
   cursor: pointer;
 }
 
-.left { left: 0; }
-.center { left: 33.33%; width: 33.33%; }
-.right { right: 0; }
-
-/* StoryBar enhancements */
-.storyBar {
-  display: flex;
-  overflow-x: auto;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 30px;
-  background-color: var(--card-bg);
-  scroll-behavior: smooth;
+.left {
+  left: 0;
 }
 
-.story {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+.center {
+  left: 33.33%;
+  width: 33.33%;
 }
 
-.story:hover {
-  transform: translateY(-2px);
+.right {
+  right: 0;
 }
 
-.avatarWrapper {
-  padding: 2px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-}
-
-.unviewed .avatarWrapper {
-  border: 2px solid #ff0; /* подсветка непросмотренной истории */
-}
-
-.story img {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.story span {
-  text-align: center;
-  font-size: 12px;
-  margin-top: 4px;
-  color: var(--foreground);
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.soundBtn {
+/* Controls (mute + slider) */
+.controlsLeft {
   position: absolute;
   bottom: 24px;
-  right: 24px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  left: 24px;
+}
+
+/* Sound button */
+.soundBtn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
+  background: rgba(0,0,0,0.55);
   border: none;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.45);
+  align-items: center;
   backdrop-filter: blur(6px);
-  color: #fff;
   cursor: pointer;
-  z-index: 10;
-  transition: transform 0.15s ease, background 0.2s ease;
+  color: white;
+  transition: background 0.2s;
 }
 
 .soundBtn:hover {
-  transform: scale(1.1);
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.75);
 }
 
-.soundBtn svg {
-  stroke-width: 2.4;
+/* Volume slider */
+.volumeSlider {
+  width: 160px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+  position: relative;
 }
 
-/* Адаптивность */
-@media (max-width: 1024px) {
-  .story img { width: 60px; height: 60px; }
-  .story span { font-size: 11px; }
+.volumeSlider::-webkit-slider-runnable-track {
+  height: 100%;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.7);
 }
 
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  margin-top: -5px;
+  box-shadow: 0 0 4px rgba(255,255,255,0.9);
+  transition: transform 0.15s ease;
+}
+
+.volumeSlider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Firefox */
+.volumeSlider::-moz-range-track {
+  height: 100%;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.5);
+}
+
+.volumeSlider::-moz-range-progress {
+  background: rgba(255,255,255,0.7);
+  height: 100%;
+  border-radius: 3px;
+}
+
+.volumeSlider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 4px rgba(255,255,255,0.9);
+  border: none;
+  transition: transform 0.15s ease;
+}
+
+.volumeSlider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* адаптив */
 @media (max-width: 768px) {
-  .container { width: 95%; height: 90%; }
-  .avatar { width: 36px; height: 36px; }
-  .username { font-size: 14px; }
-  .story img { width: 50px; height: 50px; }
-  .story span { font-size: 10px; }
+  .container {
+    width: 95%;
+    height: 90%;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .username {
+    font-size: 14px;
+  }
+
+  .volumeSlider {
+    width: 130px;
+  }
 }
+
+/* Скрываем ползунок громкости на мобильных */
+@media (max-width: 1024px) {
+  .controlsRight {
+    display: none;
+  }
+}
+

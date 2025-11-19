@@ -27,6 +27,7 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(0.05);
 
   const timerRef = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -34,9 +35,27 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
   const current = items[index];
   if (!current) return null;
 
-  const duration = current.media.duration ?? (current.media.type === "image" ? DEFAULT_IMAGE_DURATION : 0);
+  const duration =
+    current.media.duration ??
+    (current.media.type === "image" ? DEFAULT_IMAGE_DURATION : 0);
 
-  // Прелоад следующего медиа
+  /** INIT VIDEO: APPLY DEFAULT VOLUME */
+  useEffect(() => {
+    if (current.media.type === "video" && videoRef.current) {
+      videoRef.current.volume = volume;
+      videoRef.current.muted = isMuted;
+    }
+  }, [current]);
+
+  /** Update volume/mute when user changes slider or mute btn */
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume;
+      videoRef.current.muted = isMuted;
+    }
+  }, [volume, isMuted]);
+
+  /** Preload next content */
   useEffect(() => {
     const next = items[index + 1];
     if (!next) return;
@@ -65,75 +84,80 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
           return i;
         }
       }
-      if (items[next]?.userId && items[next].userId !== current.userId) {
+      if (items[next]?.userId !== current.userId) {
         onUserChange?.(items[next].userId);
       }
       return next;
     });
+
     setProgress(0);
     clearTimer();
-  }, [items, loop, onClose, onUserChange, clearTimer]);
+  }, [items, loop, onClose, onUserChange, clearTimer, current.userId]);
 
   const goPrev = useCallback(() => {
     setIndex((i) => {
       if (i === 0) return 0;
       const prev = i - 1;
-      if (items[prev]?.userId && items[prev].userId !== current.userId) {
+      if (items[prev]?.userId !== current.userId) {
         onUserChange?.(items[prev].userId);
       }
       return prev;
     });
+
     setProgress(0);
     clearTimer();
-  }, [items, onUserChange, clearTimer]);
+  }, [items, onUserChange, clearTimer, current.userId]);
 
-  // Обработка прогресса
+  /** Progress / autoplay */
   useEffect(() => {
     if (current.media.type === "video") {
-      const video = videoRef.current;
-      if (!video) return;
+      const v = videoRef.current;
+      if (!v) return;
 
-      const onTime = () => {
-        if (video.duration && !isNaN(video.duration)) {
-          setProgress(Math.min(1, video.currentTime / video.duration));
+      const handleTime = () => {
+        if (v.duration && !isNaN(v.duration)) {
+          setProgress(Math.min(1, v.currentTime / v.duration));
         }
       };
-      const onEnded = () => goNext();
 
-      video.addEventListener("timeupdate", onTime);
-      video.addEventListener("ended", onEnded);
+      const handleEnd = () => goNext();
 
-      if (!isPaused) video.play().catch(() => {});
-      else video.pause();
+      v.addEventListener("timeupdate", handleTime);
+      v.addEventListener("ended", handleEnd);
+
+      if (!isPaused) v.play().catch(() => {});
+      else v.pause();
 
       return () => {
-        video.removeEventListener("timeupdate", onTime);
-        video.removeEventListener("ended", onEnded);
+        v.removeEventListener("timeupdate", handleTime);
+        v.removeEventListener("ended", handleEnd);
       };
-    } else {
-      let elapsed = 0;
-      if (!isPaused) {
-        timerRef.current = window.setInterval(() => {
-          elapsed += PROGRESS_TICK_MS;
-          setProgress(Math.min(1, elapsed / duration));
-          if (elapsed >= duration) {
-            clearTimer();
-            goNext();
-          }
-        }, PROGRESS_TICK_MS);
-      }
-      return () => clearTimer();
     }
+
+    // IMAGES
+    let elapsed = 0;
+    if (!isPaused) {
+      timerRef.current = window.setInterval(() => {
+        elapsed += PROGRESS_TICK_MS;
+        setProgress(Math.min(1, elapsed / duration));
+        if (elapsed >= duration) {
+          clearTimer();
+          goNext();
+        }
+      }, PROGRESS_TICK_MS);
+    }
+
+    return () => clearTimer();
   }, [current, isPaused, goNext, duration, clearTimer]);
 
-  // Hit zones: переключение кликами
+  /** Click zones */
   const handleZoneClick = (zone: "prev" | "toggle" | "next") => {
     if (zone === "prev") goPrev();
     if (zone === "next") goNext();
-    if (zone === "toggle") setIsPaused(p => !p);
+    if (zone === "toggle") setIsPaused((p) => !p);
   };
 
-  // Escape для выхода
+  /** Escape exit */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -142,10 +166,11 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Render
   return (
     <div className={styles.overlay}>
       <div className={styles.container}>
+
+        {/* HEADER */}
         <header className={styles.header}>
           <div className={styles.user}>
             <img src={current.avatar} className={styles.avatar} />
@@ -154,10 +179,12 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </header>
 
+        {/* PROGRESS */}
         <div className={styles.progressRow}>
           {(() => {
             const userId = current.userId;
-            const indices = items.map((it, ii) => ({ it, ii }))
+            const indices = items
+              .map((it, ii) => ({ it, ii }))
               .filter(x => x.it.userId === userId)
               .map(x => x.ii);
 
@@ -165,43 +192,73 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
               <div key={ii} className={styles.progressTrack}>
                 <div
                   className={styles.progressFill}
-                  style={{ transform: ii === index ? `scaleX(${progress})` : ii < index ? "scaleX(1)" : "scaleX(0)" }}
+                  style={{
+                    transform:
+                      ii === index
+                        ? `scaleX(${progress})`
+                        : ii < index
+                        ? "scaleX(1)"
+                        : "scaleX(0)"
+                  }}
                 />
               </div>
             ));
           })()}
         </div>
 
+        {/* MEDIA */}
         <div className={styles.mediaArea}>
           {current.media.type === "image" ? (
             <img src={current.media.url} className={styles.mediaImage} draggable={false} />
           ) : (
-            <video ref={videoRef} src={current.media.url} className={styles.mediaVideo} playsInline autoPlay muted={isMuted} preload="auto" />
+            <video
+              ref={videoRef}
+              src={current.media.url}
+              className={styles.mediaVideo}
+              playsInline
+              autoPlay
+              muted={isMuted}
+              preload="auto"
+            />
           )}
 
-        <div className={styles.hitZones}>
+          {/* HIT ZONES */}
+          <div className={styles.hitZones}>
+            <button className={`${styles.zone} ${styles.left}`} onClick={() => handleZoneClick("prev")} />
+            <button className={`${styles.zone} ${styles.center}`} onClick={() => handleZoneClick("toggle")} />
+            <button className={`${styles.zone} ${styles.right}`} onClick={() => handleZoneClick("next")} />
+          </div>
 
-          {current.media.type === "video" && (
-            <button
-              className={styles.soundBtn}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMuted((prev) => {
-                  const newMuted = !prev;
-                  if (videoRef.current) videoRef.current.muted = newMuted;
-                  return newMuted;
-                });
-              }}
-            >
-              {isMuted ? <VolumeX size={22} /> : <Volume2 size={22} />}
-            </button>
-          )}
+          {/* CONTROLS LEFT: MUTE BUTTON + VOLUME SLIDER */}
+          <div className={styles.controlsLeft}>
+            {current.media.type === "video" && (
+              <>
+                <button
+                  className={styles.soundBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMuted(v => !v);
+                  }}
+                >
+                  {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+                </button>
 
-          <button className={`${styles.zone} ${styles.left}`} onClick={() => handleZoneClick("prev")} />
-          <button className={`${styles.zone} ${styles.center}`} onClick={() => handleZoneClick("toggle")} />
-          <button className={`${styles.zone} ${styles.right}`} onClick={() => handleZoneClick("next")} />
-        </div>
-
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setVolume(v);
+                    if (v > 0 && isMuted) setIsMuted(false);
+                  }}
+                  className={styles.volumeSlider}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
