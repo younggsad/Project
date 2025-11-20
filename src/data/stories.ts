@@ -22,6 +22,8 @@ export interface UserStories {
   };
   media: StoryMedia[];
   viewed?: boolean;
+  viewedAt?: number | null;
+  viewedStories?: boolean[];
 }
 
 export const stories: Story[] = [
@@ -41,6 +43,7 @@ export const storyData: UserStories[] = stories.map(story => {
       avatar: user?.avatar || "/default-avatar.png",
     },
     media: story.media,
-    viewed: false,
+    viewedStories: story.media.map(() => false),
+    viewedAt: null,
   };
 });
