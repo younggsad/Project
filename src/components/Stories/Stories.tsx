@@ -11,8 +11,9 @@ export type StoryItem = {
   avatar: string;
   createdAt?: number;
   media: { type: "image" | "video"; url: string; duration?: number };
+  originalIndex?: number;
   mediaIndex?: number;
-  userStoriesCount?: number;
+  isViewed?: boolean;
 };
 
 type Props = {
@@ -28,14 +29,19 @@ const PROGRESS_TICK_MS = 50;
 
 const timeAgo = (ts?: number) => {
   if (!ts) return '';
-  const s = Math.floor((Date.now() - ts) / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  const d = Math.floor(h / 24);
-  return `${d}d`;
+  
+  const now = Date.now();
+  const diff = now - ts;
+  
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (days > 0) return `${days}д`;
+  if (hours > 0) return `${hours}ч`;
+  if (minutes > 0) return `${minutes}м`;
+  return 'только что';
 };
 
 const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Props) => {
@@ -48,15 +54,12 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [liked, setLiked] = useState<Record<number, boolean>>({});
   const [isWideMedia, setIsWideMedia] = useState(false);
-  const [isMenuPaused, setIsMenuPaused] = useState(false);
   
   const timerRef = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const prevUserRef = useRef<number | null>(null);
   const startTouchY = useRef<number | null>(null);
   const touchDeltaY = useRef<number>(0);
   const isActuallyPaused = isPaused || showMenu || showBottomSheet;
-  const viewedRef = useRef<Set<number>>(new Set([startIndex]));
 
   // guards
   if (!items || items.length === 0) return null;
@@ -72,41 +75,12 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
   const posInUser = userIndices.indexOf(index);
   const duration = current.media.duration ?? (current.media.type === "image" ? DEFAULT_IMAGE_DURATION : 0);
 
-  // Отмечаем просмотренные истории
-  useEffect(() => {
-    viewedRef.current.add(index);
-  }, [index]);
-
-  // apply volume/mute to video element
-  useEffect(() => {
-    if (videoRef.current) {
-      if (isActuallyPaused) videoRef.current.pause();
-      else videoRef.current.play().catch(() => {});
-    }
-  }, [isActuallyPaused]);
-
-  // notify parent about user change (index inside user's list)
+  // notify parent about user change
   useEffect(() => {
     if (typeof onUserChange === "function") {
       onUserChange(current.userId, posInUser);
     }
-    prevUserRef.current = current.userId;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, current.userId, posInUser]);
-
-  // preload next media
-  useEffect(() => {
-    const next = items[index + 1];
-    if (!next) return;
-    if (next.media.type === "image") {
-      const img = new Image();
-      img.src = next.media.url;
-    } else {
-      const v = document.createElement('video');
-      v.src = next.media.url;
-      v.preload = 'auto';
-    }
-  }, [index, items]);
+  }, [index, current.userId, posInUser, onUserChange]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -115,61 +89,36 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
     }
   }, []);
 
-  const goNext = useCallback(() => {
-    setIndex(i => {
-      // Ищем следующий непросмотренный
-      for (let nextIdx = i + 1; nextIdx < items.length; nextIdx++) {
-        if (!viewedRef.current.has(nextIdx)) {
-          return nextIdx;
-        }
-      }
-      
-      // Если все последующие просмотрены, идём по порядку
-      const next = i + 1;
-      
-      if (next < items.length) {
-        return next;
-      }
-      
-      // Достигли конца
-      if (loop) {
-        // В режиме loop ищем первый непросмотренный с начала
-        const firstUnseen = items.findIndex((_, idx) => !viewedRef.current.has(idx));
-        return firstUnseen !== -1 ? firstUnseen : 0;
-      } else {
-        setTimeout(() => onClose(), 0);
-        return i;
-      }
-    });
+// В Stories.tsx оставляем ПРОСТУЮ логику навигации:
 
-    setProgress(0);
-    setTimeout(() => closeAllMenus(), 0);
+  const goNext = useCallback(() => {
+    const nextIndex = index + 1;
+    
+    if (nextIndex < items.length) {
+      setIndex(nextIndex);
+      setProgress(0);
+    } else {
+      onClose();
+    }
+    
     clearTimer();
-  }, [items, loop, onClose, clearTimer]);
+  }, [index, items.length, onClose, clearTimer]);
 
   const goPrev = useCallback(() => {
-    closeAllMenus();
-    setIndex(i => {
-      // Ищем предыдущий непросмотренный
-      for (let prevIdx = i - 1; prevIdx >= 0; prevIdx--) {
-        if (!viewedRef.current.has(prevIdx)) {
-          return prevIdx;
-        }
-      }
-      
-      // Если все предыдущие просмотрены, идём по порядку
-      return Math.max(0, i - 1);
-    });
-    setProgress(0);
+    const prevIndex = index - 1;
+    
+    if (prevIndex >= 0) {
+      setIndex(prevIndex);
+      setProgress(0);
+    }
+    
     clearTimer();
-  }, [clearTimer]);
+  }, [index, clearTimer]);
 
-  // progress handling (video or image)
+  // progress handling
   useEffect(() => {
     clearTimer();
     setProgress(0);
-
-    // reset wide flag and then evaluate actual media dims shortly
     setIsWideMedia(false);
 
     if (current.media.type === "video") {
@@ -182,13 +131,12 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
         }
       };
       const onEnded = () => {
-        setTimeout(() => goNext(), 0);
+        goNext();
       };
 
       v.addEventListener('timeupdate', onTime);
       v.addEventListener('ended', onEnded);
 
-      // metadata loaded -> compute if wide
       const onMeta = () => {
         if (v.videoWidth && v.videoHeight) {
           setIsWideMedia(v.videoWidth / v.videoHeight > 1.4);
@@ -196,7 +144,7 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
       };
       v.addEventListener('loadedmetadata', onMeta);
 
-      if (!isPaused) v.play().catch(() => {});
+      if (!isActuallyPaused) v.play().catch(() => {});
       else v.pause();
 
       return () => {
@@ -205,7 +153,6 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
         v.removeEventListener('loadedmetadata', onMeta);
       };
     } else {
-      // image: start timer and compute image natural size
       let elapsed = 0;
       const img = new Image();
       img.src = current.media.url;
@@ -215,19 +162,19 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
         }
       };
 
-      if (!isPaused) {
+      if (!isActuallyPaused) {
         timerRef.current = window.setInterval(() => {
           elapsed += PROGRESS_TICK_MS;
           setProgress(Math.min(1, elapsed / duration));
           if (elapsed >= duration) {
             clearTimer();
-            setTimeout(() => goNext(), 0);
+            goNext();
           }
         }, PROGRESS_TICK_MS);
       }
       return () => clearTimer();
     }
-  }, [current, isPaused, goNext, duration, clearTimer]);
+  }, [current, isActuallyPaused, goNext, duration, clearTimer]);
 
   // keyboard controls
   useEffect(() => {
@@ -242,18 +189,17 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
 
   // hit zones
   const handleZoneClick = (zone: "prev" | "toggle" | "next") => {
-    setTimeout(() => closeAllMenus(), 0);
     if (zone === "prev") goPrev();
     if (zone === "next") goNext();
     if (zone === "toggle") setIsPaused(p => !p);
   };
 
-  // like toggle (visual only)
+  // like toggle
   const toggleLike = (idx: number) => {
     setLiked(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
 
-  // three-dots menu handlers
+  // menu handlers
   const onMoreClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     const isMobile = window.innerWidth <= 768;
@@ -266,12 +212,7 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
     setShowBottomSheet(false);
   }, []);
 
-  useEffect(() => {
-    if (isMenuPaused) setIsPaused(true);
-    else setIsPaused(false);
-  }, [isMenuPaused]);
-
-  // touch handlers for swipe down to close on mobile
+  // touch handlers
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
     startTouchY.current = e.touches[0].clientY;
@@ -281,7 +222,6 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
     if (startTouchY.current === null) return;
     const curY = e.touches[0].clientY;
     touchDeltaY.current = curY - startTouchY.current;
-    // optional: we can translate container for UX (not required)
     const el = document.querySelector(`.${styles.container}`) as HTMLElement | null;
     if (el && touchDeltaY.current > 0) {
       el.style.transform = `translateY(${touchDeltaY.current}px) scale(${1 - Math.min(0.08, touchDeltaY.current / 200)})`;
@@ -297,12 +237,9 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
     }
     startTouchY.current = null;
     touchDeltaY.current = 0;
-    setTimeout(() => closeAllMenus(), 0);
-    // threshold, close if swiped down enough
     if (delta > 120) onClose();
   };
 
-  // Stop propagation so clicks on the modal don't close overlay (we don't auto close overlay on click though)
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
@@ -314,7 +251,6 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* Header with avatar, name, time, more + close */}
         <header className={styles.header}>
           <div className={styles.leftHeader}>
             <img src={current.avatar} className={styles.avatar} alt={current.username} draggable={false} />
@@ -329,7 +265,6 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
               className={styles.moreBtn}
               onClick={onMoreClick}
               aria-label="More"
-              title="More"
             >
               <MoreHorizontal size={20} />
             </button>
@@ -338,7 +273,6 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
               <X size={20} />
             </button>
 
-            {/* simple desktop menu */}
             {showMenu && (
               <div className={styles.menu}>
                 <button className={styles.menuItem}><Flag size={16} />Пожаловаться</button>
@@ -348,7 +282,6 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
           </div>
         </header>
 
-        {/* Progress row */}
         <div className={styles.progressRow}>
           {userIndices.map((globalIndex, pos) => (
             <div key={globalIndex} className={styles.progressTrack}>
@@ -367,7 +300,6 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
           ))}
         </div>
 
-        {/* Media area */}
         <div className={`${styles.mediaArea} ${isWideMedia ? styles.wide : ''}`}>
           {current.media.type === 'image' ? (
             <img
@@ -398,48 +330,41 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
           />
           )}
 
-          {/* Hit zones (prev / toggle / next) */}
           <div className={styles.hitZones}>
-            <button className={`${styles.zone} ${styles.left}`} onClick={() => handleZoneClick("prev")} aria-label="Prev" />
-            <button className={`${styles.zone} ${styles.center}`} onClick={() => handleZoneClick("toggle")} aria-label="Pause/Play" />
-            <button className={`${styles.zone} ${styles.right}`} onClick={() => handleZoneClick("next")} aria-label="Next" />
+            <button className={`${styles.zone} ${styles.left}`} onClick={() => handleZoneClick("prev")} />
+            <button className={`${styles.zone} ${styles.center}`} onClick={() => handleZoneClick("toggle")} />
+            <button className={`${styles.zone} ${styles.right}`} onClick={() => handleZoneClick("next")} />
           </div>
 
-          {/* volume controls */}
-          <div className={styles.volumeControls}>
-            {current.media.type === 'video' && (
-              <>
-                <button
-                  className={styles.soundBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsMuted(m => !m);
-                  }}
-                  aria-label="Toggle sound"
-                >
-                  {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                </button>
+          {current.media.type === 'video' && (
+            <div className={styles.volumeControls}>
+              <button
+                className={styles.soundBtn}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMuted(m => !m);
+                }}
+              >
+                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+              </button>
 
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={volume}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    setVolume(v);
-                    if (v > 0 && isMuted) setIsMuted(false);
-                    if (videoRef.current) videoRef.current.volume = v;
-                  }}
-                  className={styles.volumeSlider}
-                  aria-label="Volume"
-                />
-              </>
-            )}
-          </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={volume}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setVolume(v);
+                  if (v > 0 && isMuted) setIsMuted(false);
+                  if (videoRef.current) videoRef.current.volume = v;
+                }}
+                className={styles.volumeSlider}
+              />
+            </div>
+          )}
 
-          {/* bottom controls */}
           <div className={styles.bottomControls}>
             <button
               className={`${styles.actionBtn} ${liked[index] ? styles.liked : ''}`}
@@ -447,33 +372,28 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
                 e.stopPropagation();
                 toggleLike(index);
               }}
-              aria-pressed={!!liked[index]}
-              title={liked[index] ? "Liked" : "Like"}
             >
               <Heart size={20} />
             </button>
 
-            <button className={styles.actionBtn} onClick={(e) => e.stopPropagation()} title="Send message">
+            <button className={styles.actionBtn}>
               <MessageSquare size={20} />
             </button>
 
-            <button className={styles.actionBtn} onClick={(e) => e.stopPropagation()} title="Share">
+            <button className={styles.actionBtn}>
               <Share2 size={20} />
             </button>
           </div>
         </div>
 
-        {/* bottom sheet for mobile or confirm panel for desktop */}
-        <div
-          className={`${styles.bottomSheet} ${showBottomSheet ? styles.sheetVisible : ''}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className={styles.sheetHandle} />
-          <button className={styles.sheetItem}><Flag size={16} /> Пожаловаться</button>
-          <button className={styles.sheetItem}>Скрыть истории пользователя</button>
-          <button className={styles.sheetCancel} onClick={() => setShowBottomSheet(false)}>Отмена</button>
-        </div>
-
+        {showBottomSheet && (
+          <div className={styles.bottomSheet} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.sheetHandle} />
+            <button className={styles.sheetItem}><Flag size={16} /> Пожаловаться</button>
+            <button className={styles.sheetItem}>Скрыть истории пользователя</button>
+            <button className={styles.sheetCancel} onClick={() => setShowBottomSheet(false)}>Отмена</button>
+          </div>
+        )}
       </div>
     </div>
   );

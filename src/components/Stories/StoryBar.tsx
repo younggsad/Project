@@ -2,136 +2,166 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { storyData as initialStoryData, UserStories } from "@/data/stories";
-import { stories as rawStories } from "@/data/stories";
 import Stories, { StoryItem } from "@/components/Stories/Stories";
 import styles from "./StoryBar.module.css";
 
 const LS_KEY = "stories_state_v2";
-const ONE_DAY = 24 * 60 * 60 * 1000;
-
-// refreshViewed: сбрасывает viewedStories, если прошло >24ч или если появилась новая история
-const refreshViewed = (list: UserStories[]): UserStories[] => {
-  const now = Date.now();
-  return list.map(user => {
-    if (!user.viewedAt) return user;
-
-    const expired = now - user.viewedAt > ONE_DAY;
-    if (expired) return { ...user, viewedStories: user.viewedStories?.map(() => false), viewedAt: null };
-
-    const userRaw = rawStories.filter(r => r.userId === user.userId);
-    if (!userRaw.length) return user;
-
-    const newestCreatedAt = Math.max(...userRaw.map(x => x.createdAt));
-    if (newestCreatedAt > (user.viewedAt ?? 0)) {
-      return { ...user, viewedStories: user.viewedStories?.map(() => false) };
-    }
-
-    return user;
-  });
-};
-
-// mergeSaved: объединяет LS с начальными данными
-const mergeSaved = (initial: UserStories[], saved: Partial<UserStories>[]) => {
-  const byUserId = new Map<number, Partial<UserStories>>();
-  for (const s of saved) if (s.userId) byUserId.set(s.userId, s);
-
-  return initial.map(it => {
-    const savedFor = byUserId.get(it.userId);
-    if (!savedFor) return it;
-    return {
-      ...it,
-      viewedStories: savedFor.viewedStories ?? it.viewedStories,
-      viewedAt: savedFor.viewedAt ?? it.viewedAt,
-    };
-  });
-};
 
 export default function StoryBar() {
   const [stories, setStories] = useState<UserStories[]>(initialStoryData);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  // загрузка из LS
+  // Загрузка из Local Storage
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as Partial<UserStories>[];
-        const merged = mergeSaved(initialStoryData, parsed);
-        setStories(refreshViewed(merged));
-        return;
+        const saved = JSON.parse(raw) as Partial<UserStories>[];
+        const merged = initialStoryData.map(story => {
+          const savedStory = saved.find(s => s.userId === story.userId);
+          return savedStory ? { ...story, ...savedStory } : story;
+        });
+        setStories(merged);
       }
     } catch (err) {
-      console.warn("Failed to parse LS:", err);
+      console.warn("Failed to load stories state:", err);
     }
-    setStories(refreshViewed(initialStoryData));
   }, []);
 
-  // сохраняем LS
+  // Сохранение в Local Storage
   useEffect(() => {
     try {
-      const toSave = stories.map(s => ({ userId: s.userId, viewedStories: s.viewedStories, viewedAt: s.viewedAt }));
+      const toSave = stories.map(s => ({ 
+        userId: s.userId, 
+        viewedStories: s.viewedStories, 
+        viewedAt: s.viewedAt 
+      }));
       localStorage.setItem(LS_KEY, JSON.stringify(toSave));
-    } catch {}
+    } catch (err) {
+      console.warn("Failed to save stories state:", err);
+    }
   }, [stories]);
 
-  const flatStories: StoryItem[] = useMemo(() =>
-    stories.flatMap(s =>
-      s.media.map((m, mediaIndex) => ({
-        userId: s.userId,
-        username: s.user.username,
-        avatar: s.user.avatar,
-        media: m,
-        // Добавляем информацию о позиции в медиа пользователя
-        mediaIndex,
-        userStoriesCount: s.media.length
-      }))
-    ), [stories]
-  );
-
-  const sortedStories = useMemo(
-    () => [...stories].sort((a, b) => {
-      const aUnviewed = a.viewedStories?.some(v => !v) ? 0 : 1;
-      const bUnviewed = b.viewedStories?.some(v => !v) ? 0 : 1;
-      return aUnviewed - bUnviewed;
-    }), [stories]
-  );
-
-  // открыть историю пользователя
-  const handleOpenUser = useCallback((userId: number) => {
-    // Находим индекс первого стори пользователя в flatStories
-    const firstStoryIndex = flatStories.findIndex(story => story.userId === userId);
+  // ПРАВИЛЬНЫЙ ПОРЯДОК: все истории всех пользователей, отсортированные по времени
+  const flatStories: StoryItem[] = useMemo(() => {
+    // Создаем массив всех отдельных историй
+    const allStories: (StoryItem & { originalIndex: number })[] = [];
     
-    if (firstStoryIndex !== -1) {
-      setOpenIndex(firstStoryIndex);
-    }
-  }, [flatStories]);
+    stories.forEach((userStory, userIndex) => {
+      userStory.media.forEach((mediaItem, mediaIndex) => {
+        allStories.push({
+          userId: userStory.userId,
+          username: userStory.user.username,
+          avatar: userStory.user.avatar,
+          media: mediaItem,
+          createdAt: userStory.createdAt,
+          originalIndex: userIndex, // сохраняем оригинальный индекс для стабильности
+          mediaIndex: mediaIndex,
+          isViewed: userStory.viewedStories?.[mediaIndex] || false
+        });
+      });
+    });
 
-  const handleUserChange = useCallback((userId: number, storyIdx: number) => {
-    setStories(prev => prev.map(u => {
-      if (u.userId !== userId) return u;
-      const updatedViewed = [...(u.viewedStories ?? Array(u.media.length).fill(false))];
-      if (storyIdx >= 0 && storyIdx < updatedViewed.length) {
-        updatedViewed[storyIdx] = true;
+    // Сортируем ВСЕ истории по времени создания (новые сначала)
+    const sorted = allStories.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    console.log('Все истории в порядке времени:',
+      sorted.map((s, i) => ({
+        index: i,
+        user: s.username,
+        time: s.createdAt ? new Date(s.createdAt).toLocaleTimeString() : 'no time',
+        viewed: s.isViewed,
+        mediaIndex: s.mediaIndex
+      }))
+    );
+
+    return sorted;
+  }, [stories]);
+
+  // Сортируем пользователей для отображения в баре
+  const sortedStories = useMemo(() => {
+    const unviewed: UserStories[] = [];
+    const viewed: UserStories[] = [];
+
+    stories.forEach(story => {
+      const hasUnviewed = story.viewedStories?.some(viewed => !viewed) ?? true;
+      if (hasUnviewed) {
+        unviewed.push(story);
+      } else {
+        viewed.push(story);
       }
-      return { ...u, viewedStories: updatedViewed, viewedAt: Date.now() };
+    });
+
+    // Сортируем по времени (новые сначала)
+    unviewed.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    viewed.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    return [...unviewed, ...viewed];
+  }, [stories]);
+
+  // Открыть истории пользователя - ПРОСТАЯ ЛОГИКА
+  const handleOpenUser = useCallback((userId: number) => {
+    // Находим САМУЮ ПЕРВУЮ непросмотренную историю этого пользователя в общем списке
+    for (let i = 0; i < flatStories.length; i++) {
+      const story = flatStories[i];
+      if (story.userId === userId) {
+        // Проверяем, просмотрена ли эта конкретная история
+        const userStory = stories.find(s => s.userId === userId);
+        const isViewed = userStory?.viewedStories?.[story.mediaIndex || 0] || false;
+        
+        if (!isViewed) {
+          setOpenIndex(i);
+          return;
+        }
+      }
+    }
+
+    // Если все истории пользователя просмотрены, открываем самую новую
+    for (let i = 0; i < flatStories.length; i++) {
+      const story = flatStories[i];
+      if (story.userId === userId) {
+        setOpenIndex(i);
+        return;
+      }
+    }
+  }, [flatStories, stories]);
+
+  // Обработчик изменения текущей истории
+  const handleUserChange = useCallback((userId: number, storyIdx: number) => {
+    setStories(prev => prev.map(userStory => {
+      if (userStory.userId !== userId) return userStory;
+      
+      const updatedViewedStories = [...(userStory.viewedStories || Array(userStory.media.length).fill(false))];
+      if (storyIdx >= 0 && storyIdx < updatedViewedStories.length) {
+        updatedViewedStories[storyIdx] = true;
+      }
+      
+      return {
+        ...userStory,
+        viewedStories: updatedViewedStories,
+      };
     }));
   }, []);
 
   return (
     <>
       <div className={styles.storyBar}>
-        {sortedStories.map(s => {
-          const hasUnviewed = s.viewedStories?.some(v => !v);
+        {sortedStories.map(userStory => {
+          const hasUnviewed = userStory.viewedStories?.some(viewed => !viewed) ?? true;
           return (
             <div
-              key={s.id}
-              className={`${styles.story} ${hasUnviewed ? styles.unviewed : ""}`}
-              onClick={() => handleOpenUser(s.userId)}
+              key={userStory.id}
+              className={`${styles.story} ${hasUnviewed ? styles.unviewed : styles.viewed}`}
+              onClick={() => handleOpenUser(userStory.userId)}
             >
               <div className={styles.avatarWrapper}>
-                <img src={s.user.avatar} alt={s.user.username} className={styles.avatar} />
+                <img 
+                  src={userStory.user.avatar} 
+                  alt={userStory.user.username} 
+                  className={styles.avatar} 
+                />
               </div>
-              <span>{s.user.username}</span>
+              <span className={styles.username}>{userStory.user.username}</span>
             </div>
           );
         })}
