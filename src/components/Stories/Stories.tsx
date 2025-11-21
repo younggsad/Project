@@ -2,8 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./Stories.module.css";
-import { Volume2, VolumeX, MoreHorizontal, Heart, MessageSquare, Share2, X, Flag
-} from "lucide-react";
+import { Volume2, VolumeX, MoreHorizontal, Heart, MessageSquare, Share2, X, Flag } from "lucide-react";
 
 export type StoryItem = {
   userId: number;
@@ -54,12 +53,24 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [liked, setLiked] = useState<Record<number, boolean>>({});
   const [isWideMedia, setIsWideMedia] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const timerRef = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const startTouchY = useRef<number | null>(null);
   const touchDeltaY = useRef<number>(0);
   const isActuallyPaused = isPaused || showMenu || showBottomSheet;
+
+  // Определяем мобильное устройство
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // guards
   if (!items || items.length === 0) return null;
@@ -88,8 +99,6 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
       timerRef.current = null;
     }
   }, []);
-
-// В Stories.tsx оставляем ПРОСТУЮ логику навигации:
 
   const goNext = useCallback(() => {
     const nextIndex = index + 1;
@@ -199,12 +208,18 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
     setLiked(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
 
-  // menu handlers
+  // menu handlers - ИСПРАВЛЕННАЯ ЛОГИКА
   const onMoreClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) setShowBottomSheet(true);
-    else setShowMenu(prev => !prev);
+    e.preventDefault(); // Добавляем preventDefault для мобильных
+    
+    if (isMobile) {
+      setShowBottomSheet(true);
+      setShowMenu(false);
+    } else {
+      setShowMenu(prev => !prev);
+      setShowBottomSheet(false);
+    }
   };
 
   const closeAllMenus = useCallback(() => {
@@ -212,12 +227,25 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
     setShowBottomSheet(false);
   }, []);
 
+  // Закрывать меню при клике вне его
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (showMenu) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showMenu]);
+
   // touch handlers
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
     startTouchY.current = e.touches[0].clientY;
     touchDeltaY.current = 0;
   };
+
   const onTouchMove = (e: React.TouchEvent) => {
     if (startTouchY.current === null) return;
     const curY = e.touches[0].clientY;
@@ -228,6 +256,7 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
       el.style.transition = 'transform 0s';
     }
   };
+
   const onTouchEnd = () => {
     const delta = touchDeltaY.current;
     const el = document.querySelector(`.${styles.container}`) as HTMLElement | null;
@@ -237,6 +266,12 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
     }
     startTouchY.current = null;
     touchDeltaY.current = 0;
+    
+    // Закрываем bottom sheet если свайпаем вниз
+    if (showBottomSheet && delta > 50) {
+      setShowBottomSheet(false);
+    }
+    
     if (delta > 120) onClose();
   };
 
@@ -273,8 +308,9 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
               <X size={20} />
             </button>
 
-            {showMenu && (
-              <div className={styles.menu}>
+            {/* Десктоп меню */}
+            {showMenu && !isMobile && (
+              <div className={styles.menu} onClick={(e) => e.stopPropagation()}>
                 <button className={styles.menuItem}><Flag size={16} />Пожаловаться</button>
                 <button className={styles.menuItem}>Скрыть истории пользователя</button>
               </div>
@@ -324,7 +360,7 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
             src={current.media.url}
             className={styles.mediaVideo}
             playsInline
-            autoPlay
+            autoPlay={!isActuallyPaused}
             preload="auto"
             controls={false}
           />
@@ -386,12 +422,28 @@ const Stories = ({ items, startIndex, onClose, onUserChange, loop = false }: Pro
           </div>
         </div>
 
-        {showBottomSheet && (
-          <div className={styles.bottomSheet} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.sheetHandle} />
-            <button className={styles.sheetItem}><Flag size={16} /> Пожаловаться</button>
-            <button className={styles.sheetItem}>Скрыть истории пользователя</button>
-            <button className={styles.sheetCancel} onClick={() => setShowBottomSheet(false)}>Отмена</button>
+        {/* Мобильное bottom sheet */}
+        {showBottomSheet && isMobile && (
+          <div 
+            className={`${styles.bottomSheet} ${showBottomSheet ? styles.sheetVisible : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div 
+              className={styles.sheetHandle} 
+              onClick={() => setShowBottomSheet(false)}
+            />
+            <button className={styles.sheetItem} onClick={() => setShowBottomSheet(false)}>
+              <Flag size={16} /> Пожаловаться
+            </button>
+            <button className={styles.sheetItem} onClick={() => setShowBottomSheet(false)}>
+              Скрыть истории пользователя
+            </button>
+            <button 
+              className={styles.sheetCancel} 
+              onClick={() => setShowBottomSheet(false)}
+            >
+              Отмена
+            </button>
           </div>
         )}
       </div>

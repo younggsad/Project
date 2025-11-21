@@ -392,3 +392,8 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .volumeControls {
+    display: none;
+  }
+}
