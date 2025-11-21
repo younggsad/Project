@@ -76,11 +76,14 @@ export default function StoryBar() {
 
   const flatStories: StoryItem[] = useMemo(() =>
     stories.flatMap(s =>
-      s.media.map(m => ({
+      s.media.map((m, mediaIndex) => ({
         userId: s.userId,
         username: s.user.username,
         avatar: s.user.avatar,
         media: m,
+        // Добавляем информацию о позиции в медиа пользователя
+        mediaIndex,
+        userStoriesCount: s.media.length
       }))
     ), [stories]
   );
@@ -95,30 +98,21 @@ export default function StoryBar() {
 
   // открыть историю пользователя
   const handleOpenUser = useCallback((userId: number) => {
-    const user = stories.find(u => u.userId === userId);
-    if (!user) return;
-
-    let targetIdx = user.viewedStories?.findIndex(v => !v);
-
-    // если все просмотрены → открыть первую
-    if (targetIdx === -1) targetIdx = 0;
-
-    // ищем глобальный индекс
-    const globalIndex = flatStories.findIndex((f, i) => 
-      f.userId === userId &&
-      flatStories.filter(s => s.userId === userId).indexOf(f) === targetIdx
-    );
-
-    if (globalIndex !== -1) {
-      setOpenIndex(globalIndex);
+    // Находим индекс первого стори пользователя в flatStories
+    const firstStoryIndex = flatStories.findIndex(story => story.userId === userId);
+    
+    if (firstStoryIndex !== -1) {
+      setOpenIndex(firstStoryIndex);
     }
-  }, [stories, flatStories]);
+  }, [flatStories]);
 
   const handleUserChange = useCallback((userId: number, storyIdx: number) => {
     setStories(prev => prev.map(u => {
       if (u.userId !== userId) return u;
-      const updatedViewed = [...(u.viewedStories ?? [])];
-      updatedViewed[storyIdx] = true;
+      const updatedViewed = [...(u.viewedStories ?? Array(u.media.length).fill(false))];
+      if (storyIdx >= 0 && storyIdx < updatedViewed.length) {
+        updatedViewed[storyIdx] = true;
+      }
       return { ...u, viewedStories: updatedViewed, viewedAt: Date.now() };
     }));
   }, []);

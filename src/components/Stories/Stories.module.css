@@ -26,59 +26,118 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  transition: transform 0.22s ease;
 }
 
 /* Header */
 .header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
+  padding: 10px 12px;
   gap: 10px;
-  background: rgba(0,0,0,0.5);
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0));
   position: relative;
+  z-index: 20;
 }
 
-.user {
+.leftHeader {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .avatar {
-  width: 55px;
-  height: 55px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
 }
 
 .username {
   color: #fff;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 16px;
+  line-height: 1;
 }
 
-.closeBtn {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  background: none;
+.timeAgo {
+  color: rgba(255,255,255,0.65);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* Right side header: more + close */
+.rightHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.moreBtn, .closeBtnTop {
+  background: rgba(0,0,0,0.5);
   border: none;
-  font-size: 28px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   color: #fff;
+}
+
+.moreBtn:hover, .closeBtnTop:hover {
+  background: rgba(0,0,0,0.7);
+}
+
+/* small desktop menu */
+.menu {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  background: #111;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+  overflow: hidden;
+  z-index: 30;
+  min-width: 220px;
+}
+
+.menuItem {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
   cursor: pointer;
 }
+.menuItem:hover { background: rgba(255,255,255,0.02); }
 
 /* Progress bars */
 .progressRow {
   display: flex;
   gap: 4px;
-  padding: 2px 12px 20px 15px;
+  padding: 10px 12px;
+  z-index: 20;
 }
 
 .progressTrack {
   flex: 1;
   height: 3px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.12);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -102,6 +161,11 @@
   background: #000;
 }
 
+.mediaArea.wide {
+  background: linear-gradient(90deg, rgba(0,0,0,0.95), rgba(0,0,0,0.95));
+}
+
+/* Media elements */
 .mediaImage,
 .mediaVideo {
   width: 100%;
@@ -111,6 +175,18 @@
   object-fit: contain;
   border-radius: 12px;
   background: #000;
+  display: block;
+}
+
+/* If media is wide, make it cover horizontally but keep letterbox vertically */
+.mediaArea.wide .mediaImage,
+.mediaArea.wide .mediaVideo {
+  width: calc(100% + 0px);
+  max-width: none;
+  height: auto;
+  max-height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 /* Hit zones */
@@ -122,30 +198,23 @@
   background: transparent;
   border: none;
   cursor: pointer;
+  z-index: 18;
 }
 
-.left {
-  left: 0;
-}
-
-.center {
-  left: 33.33%;
-  width: 33.33%;
-}
-
-.right {
-  right: 0;
-}
+.left { left: 0; }
+.center { left: 33.33%; width: 33.33%; }
+.right { right: 0; }
 
 /* Controls (mute + slider) */
-.controlsLeft {
+.volumeControls {
   position: absolute;
-  bottom: 24px;
-  z-index: 20;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
+  gap: 14px;
   align-items: center;
-  gap: 12px;
-  left: 24px;
+  z-index: 22;
 }
 
 /* Sound button */
@@ -164,9 +233,7 @@
   transition: background 0.2s;
 }
 
-.soundBtn:hover {
-  background: rgba(0,0,0,0.75);
-}
+.soundBtn:hover { background: rgba(0,0,0,0.75); }
 
 /* Volume slider */
 .volumeSlider {
@@ -175,87 +242,153 @@
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 3px;
   cursor: pointer;
   outline: none;
   position: relative;
 }
 
-.volumeSlider::-webkit-slider-runnable-track {
-  height: 100%;
-  border-radius: 3px;
-  background: rgba(255,255,255,0.7);
+.volumeSlider::-webkit-slider-runnable-track { height: 100%; border-radius: 3px; background: rgba(255,255,255,0.18); }
+.volumeSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #fff; border-radius: 50%; margin-top: -4px; }
+.volumeSlider::-moz-range-track { height: 100%; border-radius: 3px; background: rgba(255,255,255,0.12); }
+
+/* Bottom controls (like, message, share) */
+.bottomControls {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  z-index: 22;
 }
 
-.volumeSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #fff;
-  border-radius: 50%;
-  margin-top: -5px;
-  box-shadow: 0 0 4px rgba(255,255,255,0.9);
-  transition: transform 0.15s ease;
-}
-
-.volumeSlider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-/* Firefox */
-.volumeSlider::-moz-range-track {
-  height: 100%;
-  border-radius: 3px;
-  background: rgba(255,255,255,0.2);
-  border: 1px solid rgba(255,255,255,0.5);
-}
-
-.volumeSlider::-moz-range-progress {
-  background: rgba(255,255,255,0.7);
-  height: 100%;
-  border-radius: 3px;
-}
-
-.volumeSlider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 4px rgba(255,255,255,0.9);
+/* action button */
+.actionBtn {
+  background: rgba(0,0,0,0.55);
   border: none;
-  transition: transform 0.15s ease;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.actionBtn:hover { transform: translateY(-4px); background: rgba(0,0,0,0.72); }
+
+/* liked state: fill red */
+.actionBtn.liked svg { fill: #ff4d6d; stroke: #ff4d6d; transform: scale(1.05); }
+.actionBtn.liked { background: rgba(255,77,109,0.12); box-shadow: 0 6px 20px rgba(255,77,109,0.08); }
+
+/* bottom sheet (mobile) */
+.bottomSheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -320px;
+  background: #0e0e10;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  padding: 12px 16px 20px;
+  z-index: 60;
+  transition: bottom 0.28s cubic-bezier(.22,.9,.2,1);
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
 }
 
-.volumeSlider::-moz-range-thumb:hover {
-  transform: scale(1.2);
+.sheetVisible { bottom: 0; }
+
+.sheetHandle {
+  width: 36px;
+  height: 6px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 99px;
+  margin: 8px auto 14px;
 }
 
-/* адаптив */
+.sheetItem {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  color: #fff;
+  border: none;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+.sheetCancel {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+  color: #fff;
+  border: none;
+}
+
+/* small tweaks */
+.closeBtnTop { display: inline-flex; align-items: center; justify-content: center; }
+
+/* responsive */
 @media (max-width: 768px) {
+  /* Контейнер */
   .container {
-    width: 95%;
+    width: 98%;
+    max-width: 450px;
     height: 90%;
+    max-height: 700px;
+    border-radius: 12px;
+    overflow: hidden;
   }
 
-  .avatar {
-    width: 36px;
-    height: 36px;
-  }
+  .avatar { width: 40px; height: 40px; }
+  .meta { gap: 0; }
+  .progressRow { padding: 8px 10px; }
 
-  .username {
-    font-size: 14px;
+  .controlsLeft {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    z-index: 22;
+    pointer-events: auto;
+    max-width: 90%;
   }
 
   .volumeSlider {
-    width: 130px;
+    width: 110px;
+    max-width: 70vw;
   }
-}
 
-/* Скрываем ползунок громкости на мобильных */
-@media (max-width: 1024px) {
-  .controlsRight {
-    display: none;
+  .bottomControls {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    z-index: 22;
+  }
+
+  .mediaArea {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    background: #000;
   }
 }
 
