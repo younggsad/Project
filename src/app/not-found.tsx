@@ -13,5 +13,5 @@ export default function NotFound() {
         Вернуться на главную
       </Link>
     </div>
-  )
+  );
 }
