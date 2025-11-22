@@ -13,7 +13,7 @@ export const Sidebar: React.FC = () => {
 
   const links = [
     { href: "/", label: "Главная", icon: <Home size={22} /> },
-    { href: "/search", label: "Поиск", icon: <Search size={22} /> },
+    { href: "/SearchPage", label: "Поиск", icon: <Search size={22} /> },
     { href: "/reels", label: "Видео", icon: <Film size={22} /> },
     { href: "/messages", label: "Сообщения", icon: <MessageCircle size={22} /> },
     { href: "/profile", label: "Профиль", icon: <User size={22} /> },

@@ -1,0 +1,140 @@
+.wrapper {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 16px 20px;
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+
+  transition: 0.25s ease;
+}
+
+html.light .searchBar {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.searchBar:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(129, 140, 248, 0.35);
+}
+
+.searchBar input {
+  flex: 1;
+  border: none;
+  outline: none;
+
+  background: transparent;
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.info {
+  opacity: 0.6;
+  font-size: 18px;
+  padding-left: 4px;
+  font-weight: 400;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 80px;
+}
+
+.loading,
+.noUsers,
+.user {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 16px 18px;
+  border-radius: 16px;
+
+  background: var(--card-bg);
+  border: 1px solid transparent;
+
+  cursor: pointer;
+  transition: 0.25s ease;
+
+  box-shadow: 0 0 0 rgba(0,0,0,0);
+}
+
+html.dark .user {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.user:hover {
+  border-color: var(--accent);
+  background: var(--hover-bg);
+
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.user:hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 30% 20%,
+    rgba(129, 140, 248, 0.15),
+    transparent 60%
+  );
+  opacity: 1;
+  pointer-events: none;
+  transition: 0.3s;
+}
+
+
+.user img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user:hover img {
+  transform: scale(1.05);
+  transition: 0.3s;
+  box-shadow: 0 0 12px rgba(129, 140, 248, 0.35);
+}
+
+.username {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 18px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
