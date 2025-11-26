@@ -28,6 +28,66 @@ export default function ReelsPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Определяем мобильное устройство и скрываем кнопку темы
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      
+      if (mobile) {
+        // Скрываем кнопку темы и другие элементы
+        const themeToggles = document.querySelectorAll(
+          '.theme-toggle, .dark-mode-toggle, .theme-switcher, [class*="theme"], [class*="toggle"]'
+        );
+        
+        themeToggles.forEach((element) => {
+          (element as HTMLElement).style.display = 'none';
+        });
+
+        // Также скрываем sidebar если есть
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+          (sidebar as HTMLElement).style.display = 'none';
+        }
+
+        // Скрываем header если есть
+        const header = document.querySelector('header');
+        if (header) {
+          (header as HTMLElement).style.display = 'none';
+        }
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      // Восстанавливаем элементы при размонтировании
+      if (isMobile) {
+        const themeToggles = document.querySelectorAll(
+          '.theme-toggle, .dark-mode-toggle, .theme-switcher, [class*="theme"], [class*="toggle"]'
+        );
+        
+        themeToggles.forEach((element) => {
+          (element as HTMLElement).style.display = '';
+        });
+
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+          (sidebar as HTMLElement).style.display = '';
+        }
+
+        const header = document.querySelector('header');
+        if (header) {
+          (header as HTMLElement).style.display = '';
+        }
+      }
+      
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, [isMobile]);
 
   // Разрешаем прокрутку только внутри контейнера рилсов
   useEffect(() => {
@@ -290,8 +350,6 @@ export default function ReelsPage() {
     }
     return count.toString();
   };
-
-  const isDesktop = typeof window !== "undefined" && window.innerWidth > 1024;
 
   if (!reels || reels.length === 0) {
     return <div className={styles.empty}>Нет рилсов</div>;
