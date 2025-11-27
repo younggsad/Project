@@ -1,148 +1,186 @@
-/* === ОБЕРТКА ВСЕЙ СТРАНИЦЫ === */
 .profilePage {
   width: 100%;
   max-width: var(--content-width);
   margin: 0 auto;
-  padding: 1rem 0;
+  padding: 2rem 1rem;
   color: var(--foreground);
-  transition: color 0.3s ease, background 0.3s ease;
 }
 
-/* === ВЕРХНЯЯ ОБЛАСТЬ ПРОФИЛЯ === */
+/* === HEADER === */
 .header {
   display: flex;
   align-items: center;
   gap: 32px;
-  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.avatarWrapper {
+  padding: 5px;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .avatar {
-  width: 110px;
-  height: 110px;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
   object-fit: cover;
-  background: var(--card-bg);
+  display: block;
+  transition: transform 0.3s ease;
 }
 
-/* === СТАТИСТИКА === */
+.avatar:hover {
+  transform: scale(1.05);
+}
+
+/* === INFO === */
+.info {
+  flex: 1;
+}
+
+.username {
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
 .stats {
   display: flex;
-  gap: 32px;
+  gap: 30px;
+  margin-top: 15px;
 }
 
 .statItem {
   text-align: center;
-  min-width: 60px;
+  cursor: default;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.statItem:hover {
+  transform: scale(1.05);
+  color: var(--accent);
 }
 
 .statNumber {
   font-weight: 700;
-  font-size: 19px;
+  font-size: 20px;
 }
 
 .statLabel {
+  font-size: 15px;
   color: var(--muted-text);
-  font-size: 13px;
-}
-
-/* === ИМЯ, BIO === */
-.username {
-  font-size: 24px;
-  font-weight: 700;
-  margin-top: 12px;
 }
 
 .bio {
-  margin-top: 8px;
-  font-size: 14px;
-  line-height: 1.35;
-  white-space: pre-line;
+  margin-bottom: 0.2rem;
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--foreground);
 }
 
-/* === ССЫЛКА === */
-.link {
-  display: block;
-  margin-top: 6px;
-  font-size: 14px;
-  color: var(--accent);
-  text-decoration: none;
-  word-break: break-all;
-}
-
-/* === СЕТКА ПОСТОВ === */
+/* === GALLERY === */
 .gallery {
-  margin-top: 20px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
+  grid-template-columns: repeat(auto-fit, 600px);
+  justify-content: center;
+  gap: 12px;
+}
+
+.postWrapper {
+  position: relative;
+  width: 600px;       
+  height: 350px;      
+  overflow: hidden;
+  border-radius: 12px;
 }
 
 .post {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 100%;
   object-fit: cover;
-  background: #000;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.post:hover {
+  transform: scale(1.1);
+  filter: brightness(0.9);
+}
+
+/* === ДЕКОРАТИВНЫЕ ФИГУРЫ === */
+.decorCircle {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.15);
+  top: 50px;
+  left: 170px;
+  z-index: 0;
+}
+
+.decorSquare {
+  position: absolute;
+  width: 120px;
+  height: 150px;
+  background: rgba(129, 140, 248, 0.1);
+  top: 300px;
+  right: -60px;
+  transform: rotate(25deg);
+  z-index: 0;
+}
+
+/* === АКТИВНОСТЬ === */
+.activityCard {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.activityCard:hover {
+  transform: translateY(-5px);
+}
+
+.activityCard h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 20px;
+  color: var(--foreground);
+}
+
+.activityCard p {
+  font-size: 16px;
+  color: var(--muted-text);
+  line-height: 1.4;
 }
 
 /* ========================= */
 /*        АДАПТИВ            */
 /* ========================= */
-
-/* — Планшеты — */
 @media (max-width: 1024px) {
-  .header {
-    gap: 20px;
-  }
+  .header { gap: 20px; }
+  .avatar { width: 100px; height: 100px; }
+  .username { font-size: 22px; }
+  .stats { gap: 20px; }
+  .decorCircle { display: none; }
+  .decorSquare { display: none; }
 }
 
-/* — Мобильные — */
 @media (max-width: 768px) {
-  .header {
-    gap: 16px;
-  }
-
-  .avatar {
-    width: 95px;
-    height: 95px;
-  }
-
-  .stats {
-    gap: 20px;
-  }
-
-  .username {
-    font-size: 20px;
-  }
+  .header { gap: 16px; flex-direction: column; align-items: center; text-align: center; }
+  .avatar { width: 90px; height: 90px; }
+  .username { font-size: 20px; }
+  .stats { gap: 15px; justify-content: center; }
+  .gallery { gap: 3px; }
 }
 
-/* — Маленькие мобильные (iPhone SE) — */
 @media (max-width: 480px) {
-  .header {
-    gap: 14px;
-  }
-
-  .avatar {
-    width: 80px;
-    height: 80px;
-  }
-
-  .stats {
-    gap: 16px;
-  }
-
-  .statNumber {
-    font-size: 17px;
-  }
-
-  .username {
-    font-size: 18px;
-  }
-
-  .bio {
-    font-size: 13px;
-  }
-
-  .gallery {
-    gap: 1px;
-  }
+  .avatar { width: 80px; height: 80px; }
+  .username { font-size: 18px; }
+  .statNumber { font-size: 16px; }
+  .bio { font-size: 13px; }
 }
