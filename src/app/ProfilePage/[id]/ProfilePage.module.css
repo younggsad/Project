@@ -1,0 +1,148 @@
+/* === ОБЕРТКА ВСЕЙ СТРАНИЦЫ === */
+.profilePage {
+  width: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 1rem 0;
+  color: var(--foreground);
+  transition: color 0.3s ease, background 0.3s ease;
+}
+
+/* === ВЕРХНЯЯ ОБЛАСТЬ ПРОФИЛЯ === */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 1rem 0;
+}
+
+.avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--card-bg);
+}
+
+/* === СТАТИСТИКА === */
+.stats {
+  display: flex;
+  gap: 32px;
+}
+
+.statItem {
+  text-align: center;
+  min-width: 60px;
+}
+
+.statNumber {
+  font-weight: 700;
+  font-size: 19px;
+}
+
+.statLabel {
+  color: var(--muted-text);
+  font-size: 13px;
+}
+
+/* === ИМЯ, BIO === */
+.username {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 12px;
+}
+
+.bio {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.35;
+  white-space: pre-line;
+}
+
+/* === ССЫЛКА === */
+.link {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+/* === СЕТКА ПОСТОВ === */
+.gallery {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.post {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: #000;
+}
+
+/* ========================= */
+/*        АДАПТИВ            */
+/* ========================= */
+
+/* — Планшеты — */
+@media (max-width: 1024px) {
+  .header {
+    gap: 20px;
+  }
+}
+
+/* — Мобильные — */
+@media (max-width: 768px) {
+  .header {
+    gap: 16px;
+  }
+
+  .avatar {
+    width: 95px;
+    height: 95px;
+  }
+
+  .stats {
+    gap: 20px;
+  }
+
+  .username {
+    font-size: 20px;
+  }
+}
+
+/* — Маленькие мобильные (iPhone SE) — */
+@media (max-width: 480px) {
+  .header {
+    gap: 14px;
+  }
+
+  .avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .stats {
+    gap: 16px;
+  }
+
+  .statNumber {
+    font-size: 17px;
+  }
+
+  .username {
+    font-size: 18px;
+  }
+
+  .bio {
+    font-size: 13px;
+  }
+
+  .gallery {
+    gap: 1px;
+  }
+}
