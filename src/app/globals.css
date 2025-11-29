@@ -74,15 +74,6 @@ main {
   transition: margin-left 0.3s ease;
 }
 
-/* Мобильные устройства */
-@media (max-width: 768px) {
-  main {
-    margin-left: 0;
-    margin-bottom: 60px;
-    padding: 1rem;
-  }
-}
-
 a, button {
   transition: color 0.3s ease, background 0.3s ease;
 }
@@ -118,14 +109,4 @@ html::-webkit-scrollbar-thumb:active {
 html {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-}
-
-@media (max-width: 1024px) {
-  html, body {
-    scrollbar-width: none;
-  }
-
-  html::-webkit-scrollbar {
-    display: none;
-  }
 }

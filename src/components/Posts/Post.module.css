@@ -61,10 +61,3 @@
 .caption strong {
   margin-right: 4px;
 }
-
-/* Мобильная версия */
-@media (max-width: 768px) {
-  .postImage { aspect-ratio: 4/3; max-height: 500px; }
-  .header img { width: 35px; height: 35px; }
-  .caption { font-size: 13px; }
-}
