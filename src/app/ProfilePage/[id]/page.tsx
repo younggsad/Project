@@ -1,4 +1,4 @@
-import { users } from "@/data/user";
+import { users } from "@/data/users";
 import { posts } from "@/data/posts";
 import styles from "./ProfilePage.module.css";
 

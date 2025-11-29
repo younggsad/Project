@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { users } from "@/data/user";
+import { users } from "@/data/users";
 
 import { Home, Search, Film, MessageCircle, User } from "lucide-react";
 

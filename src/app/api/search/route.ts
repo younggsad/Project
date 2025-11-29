@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { users } from "@/data/user";
+import { users } from "@/data/users";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);

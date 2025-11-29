@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "./Search.module.css";
-import { users } from "@/data/user";
+import { users } from "@/data/users";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");

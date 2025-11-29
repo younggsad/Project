@@ -1,4 +1,4 @@
-import { users } from "@/data/user";
+import { users } from "@/data/users";
 
 export interface Post {
   id: number;

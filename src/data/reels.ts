@@ -1,5 +1,5 @@
-import { users } from "./user";
-import type { User } from "./user";
+import { users } from "./users";
+import type { User } from "./users";
 
 export interface ReelItemRaw {
   id: number;
